@@ -144,6 +144,7 @@ if (!isset($_SESSION['username'])) {
                                                 <th>Tanggal Pendaftaran</th>
                                                 <th>Foto KTP</th>
                                                 <th>Foto Diri</th>
+                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -305,7 +306,6 @@ if (!isset($_SESSION['username'])) {
             $('#data_detail').DataTable();
         });
     </script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- Start js -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/popper.min.js"></script>

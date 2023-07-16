@@ -167,43 +167,47 @@ if (!isset($_SESSION['username'])) {
                                                         }
                                                     }
                                                 }
+                                                if ($_SESSION['username'] !== "timpusat") {
+                                                    // Jika username bukan "timpusat", tambahkan kondisi username ke WHERE clause
+                                                    $whereClause .= " AND username='" . $_SESSION['username'] . "'";
+                                                }
 
                                                 $query = "SELECT  
-                                                        id_record, 
-                                                        username,
-                                                        full_name,
-                                                        no_ktp,
-                                                        phone_number,
-                                                        CASE 
-                                                            WHEN jabatan = 0 THEN 'Koordinator Basis'
-                                                            WHEN jabatan = 1 THEN 'Koordinator Desa'
-                                                            WHEN jabatan = 2 THEN 'Koordinator Kecamatan'
-                                                            WHEN jabatan = 3 THEN 'Koordinator TPS'
-                                                            WHEN jabatan = 4 THEN 'Relawan'
-                                                        END jabatan,
-                                                        DATE(created_time) c_date,
-                                                        url_ktp,
-                                                        url_diri
-                                                    FROM record_anggota
-                                                    WHERE " . $whereClause;
+                                                id_record, 
+                                                username,
+                                                full_name,
+                                                no_ktp,
+                                                phone_number,
+                                                CASE 
+                                                    WHEN jabatan = 0 THEN 'Koordinator Basis'
+                                                    WHEN jabatan = 1 THEN 'Koordinator Desa'
+                                                    WHEN jabatan = 2 THEN 'Koordinator Kecamatan'
+                                                    WHEN jabatan = 3 THEN 'Koordinator TPS'
+                                                    WHEN jabatan = 4 THEN 'Relawan'
+                                                END jabatan,
+                                                DATE(created_time) c_date,
+                                                url_ktp,
+                                                url_diri
+                                            FROM record_anggota
+                                            WHERE " . $whereClause;
                                             } else {
                                                 $query = "SELECT 
-                                                        id_record,
-                                                        username,
-                                                        full_name,
-                                                        no_ktp,
-                                                        phone_number,
-                                                        CASE 
-                                                            WHEN jabatan = 0 THEN 'Koordinator Basis'
-                                                            WHEN jabatan = 1 THEN 'Koordinator Desa'
-                                                            WHEN jabatan = 2 THEN 'Koordinator Kecamatan'
-                                                            WHEN jabatan = 3 THEN 'Koordinator TPS'
-                                                            WHEN jabatan = 4 THEN 'Relawan'
-                                                        END jabatan,
-                                                        DATE(created_time) c_date,
-                                                        url_ktp,
-                                                        url_diri
-                                                    FROM record_anggota";
+                                                id_record,
+                                                username,
+                                                full_name,
+                                                no_ktp,
+                                                phone_number,
+                                                CASE 
+                                                    WHEN jabatan = 0 THEN 'Koordinator Basis'
+                                                    WHEN jabatan = 1 THEN 'Koordinator Desa'
+                                                    WHEN jabatan = 2 THEN 'Koordinator Kecamatan'
+                                                    WHEN jabatan = 3 THEN 'Koordinator TPS'
+                                                    WHEN jabatan = 4 THEN 'Relawan'
+                                                END jabatan,
+                                                DATE(created_time) c_date,
+                                                url_ktp,
+                                                url_diri
+                                            FROM record_anggota";
                                             }
 
                                             $data = mysqli_query($koneksi, $query);
@@ -256,6 +260,23 @@ if (!isset($_SESSION['username'])) {
         <!-- End Rightbar -->
     </div>
     <!-- End Containerbar -->
+    <!-- Start js -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/popper.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/modernizr.min.js"></script>
+    <script src="assets/js/detect.js"></script>
+    <script src="assets/js/jquery.slimscroll.js"></script>
+    <script src="assets/js/horizontal-menu.js"></script>
+    <!-- Switchery js -->
+    <script src="assets/plugins/switchery/switchery.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.1/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Core js -->
+    <script src="assets/js/core.js"></script>
+    <!-- End js -->
+
     <script type="text/javascript">
         $(document).ready(function() {
             // ambil data kecamatan/kota ketika data memilih kabupaten
@@ -306,22 +327,6 @@ if (!isset($_SESSION['username'])) {
             $('#data_detail').DataTable();
         });
     </script>
-    <!-- Start js -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/popper.min.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/modernizr.min.js"></script>
-    <script src="assets/js/detect.js"></script>
-    <script src="assets/js/jquery.slimscroll.js"></script>
-    <script src="assets/js/horizontal-menu.js"></script>
-    <!-- Switchery js -->
-    <script src="assets/plugins/switchery/switchery.min.js"></script>
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.11.1/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.1/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Core js -->
-    <script src="assets/js/core.js"></script>
-    <!-- End js -->
     <script type="text/javascript">
         $(document).ready(function() {
             $('#data_detail').DataTable();

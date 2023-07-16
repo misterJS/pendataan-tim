@@ -31,6 +31,32 @@ if (!isset($_SESSION['username'])) {
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.11.1/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 </head>
+<script type="text/javascript">
+    function confirmDelete(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+            // Redirect to delete process
+            $.ajax({
+                url: 'delete.php',
+                type: 'POST',
+                data: {
+                    id: id
+                },
+                success: function(response) {
+                    // Handle the response
+                    if (response == 'success') {
+                        alert('Data berhasil dihapus');
+                        location.reload();
+                    } else {
+                        alert('Gagal menghapus data');
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan dalam menghapus data');
+                }
+            });
+        }
+    }
+</script>
 
 <body class="horizontal-layout">
     <!-- Start Containerbar -->
@@ -48,6 +74,29 @@ if (!isset($_SESSION['username'])) {
                             <div class="card-header">
                                 <h5 class="card-title">Detail Data Tim</h5>
                             </div>
+                            <br>
+                            <?php
+                            if (isset($_GET['alert'])) {
+                                if ($_GET['alert'] == 'gagal') {
+                            ?>
+                                    <div class="alert alert-warning alert-dismissible">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                        <h4><i class="icon fa fa-warning"></i> Peringatan !</h4>
+                                        Gagal Disimpan
+                                        <p><?php echo $_GET['error'] ?></p>
+                                    </div>
+                                <?php
+                                } elseif ($_GET['alert'] == "berhasil") {
+                                ?>
+                                    <div class="alert alert-success alert-dismissible">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                        <h4><i class="icon fa fa-check"></i> Success</h4>
+                                        Berhasil Disimpan
+                                    </div>
+                            <?php
+                                }
+                            }
+                            ?>
                             <div class="card-body">
                                 <form action="detail_data.php" method="get" class='form-row'>
                                     <div class="form-group col-md-2">
@@ -118,7 +167,9 @@ if (!isset($_SESSION['username'])) {
                                                     }
                                                 }
 
-                                                $query = "SELECT username,
+                                                $query = "SELECT  
+                                                        id_record, 
+                                                        username,
                                                         full_name,
                                                         no_ktp,
                                                         phone_number,
@@ -136,6 +187,7 @@ if (!isset($_SESSION['username'])) {
                                                     WHERE " . $whereClause;
                                             } else {
                                                 $query = "SELECT 
+                                                        id_record,
                                                         username,
                                                         full_name,
                                                         no_ktp,
@@ -167,6 +219,18 @@ if (!isset($_SESSION['username'])) {
                                                     <td><?php echo $d['c_date']; ?></td>
                                                     <td><img src="images/<?php echo $d['url_ktp'] ?>" width="35" height="40"></td>
                                                     <td><img src="images/<?php echo $d['url_diri'] ?>" width="35" height="40"></td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a href="edit.php?id=<?php echo $d['id_record'] ?>">
+                                                                <button class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Edit">
+                                                                    Edit
+                                                                </button>
+                                                            </a>
+                                                            <button class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title="Delete" onclick="confirmDelete(<?php echo $d['id_record']; ?>)">
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             <?php } ?>
                                         </tbody>

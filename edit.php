@@ -109,7 +109,7 @@ $data = mysqli_fetch_assoc($result);
                                             <select name="id_desa" id="form_des" class="form-control">
                                                 <option value="">Pilih Desa</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE CHAR_LENGTH(kode)=8 AND LEFT(kode,'8')='" . $data['id_kecamatan'] . "' ORDER BY nama");
+                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE CHAR_LENGTH(kode)=10 AND LEFT(kode,'10')='" . $data['id_kecamatan'] . "' ORDER BY nama");
 
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                     $selected = ($data['id_desa'] == $d['kode']) ? 'selected' : '';
@@ -125,7 +125,7 @@ $data = mysqli_fetch_assoc($result);
                                             <select name="id_tps" id="form_tps" class="form-control">
                                                 <option value="">Pilih TPS</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT id_tps, CAST(SUBSTRING(id_tps, 15, 17) AS UNSIGNED) as tps_code FROM tps WHERE id_village='" . $data['id_desa'] . "' ORDER BY tps_code ASC");
+                                                $daerah = mysqli_query($koneksi, "SELECT id_tps, CAST(SUBSTRING(id_tps, 15, 17) AS UNSIGNED) as tps_code FROM tps WHERE id_village='32." . $data['id_desa'] . "' ORDER BY tps_code ASC");
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                     $selected = ($data['id_tps'] == $d['id_tps']) ? 'selected' : '';
                                                 ?>

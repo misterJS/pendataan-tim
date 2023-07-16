@@ -1,5 +1,5 @@
 <?php 
-$koneksi = mysqli_connect("localhost","root","","data_tim");
+$koneksi = mysqli_connect("localhost","root","","tim_pemenangan");
  
 // Check connection
 if (mysqli_connect_errno()){

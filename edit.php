@@ -78,7 +78,7 @@ $data = mysqli_fetch_assoc($result);
                                             <select name="id_regency" id="form_kab" class="form-control">
                                                 <option value="">Pilih Kota/Kabupaten</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'2')='32' AND CHAR_LENGTH(kode)=5 ORDER BY nama");
+                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE CHAR_LENGTH(kode)=2 ORDER BY nama");
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                     $selected = ($data['id_regency'] == $d['kode']) ? 'selected' : '';
                                                 ?>
@@ -93,7 +93,7 @@ $data = mysqli_fetch_assoc($result);
                                             <select name="id_kecamatan" id="form_kec" class="form-control">
                                                 <option value="">Pilih Kecamatan</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'2')='32' AND CHAR_LENGTH(kode)=8 AND LEFT(kode,'5')='" . $data['id_regency'] . "' ORDER BY nama");
+                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE CHAR_LENGTH(kode)=5 AND LEFT(kode,'5')='" . $data['id_regency'] . "' ORDER BY nama");
 
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                     $selected = ($data['id_kecamatan'] == $d['kode']) ? 'selected' : '';
@@ -109,7 +109,7 @@ $data = mysqli_fetch_assoc($result);
                                             <select name="id_desa" id="form_des" class="form-control">
                                                 <option value="">Pilih Desa</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'2')='32' AND CHAR_LENGTH(kode)=13 AND LEFT(kode,'8')='" . $data['id_kecamatan'] . "' ORDER BY nama");
+                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE CHAR_LENGTH(kode)=8 AND LEFT(kode,'8')='" . $data['id_kecamatan'] . "' ORDER BY nama");
 
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                     $selected = ($data['id_desa'] == $d['kode']) ? 'selected' : '';

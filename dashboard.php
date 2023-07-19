@@ -41,6 +41,8 @@ if ($_SESSION['username'] !== "timpusat") {
                 }
             }
         }
+    } else {
+        $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan";
     }
 }
 

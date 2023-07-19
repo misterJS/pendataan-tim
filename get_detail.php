@@ -82,6 +82,8 @@ if ($data == "idx") {
             join wilayah_2020 on wilayah_2020.kode = record_anggota.id_kecamatan";
         if ($_SESSION['username'] !== "timpusat") {
             $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_regency='$id' GROUP BY wilayah_2020.nama;";
+        } else {
+            $query .= " WHERE id_regency='$id' GROUP BY wilayah_2020.nama;";
         }
         $data = mysqli_query($koneksi, $query);
         $no = 1;
@@ -126,6 +128,8 @@ if ($data == "idx") {
             join wilayah_2020 on wilayah_2020.kode = record_anggota.id_desa";
         if ($_SESSION['username'] !== "timpusat") {
             $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_kecamatan='$id' GROUP BY wilayah_2020.nama;";
+        } else {
+            $query .= " WHERE id_kecamatan='$id' GROUP BY wilayah_2020.nama;";
         }
         $data = mysqli_query($koneksi, $query);
         $no = 1;
@@ -168,6 +172,8 @@ if ($data == "idx") {
         $query = "select id_tps, count(id_tps) as jumlah, id_tps, username from record_anggota";
         if ($_SESSION['username'] !== "timpusat") {
             $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_desa='$id' GROUP BY id_tps;";
+        } else {
+            $query .= " WHERE id_desa='$id' GROUP BY id_tps;";
         }
         $data = mysqli_query($koneksi, $query);
         $no = 1;

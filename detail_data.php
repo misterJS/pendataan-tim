@@ -151,9 +151,9 @@ if (!isset($_SESSION['username'])) {
                                             $id_tps = isset($_GET['id_tps']) ? $_GET['id_tps'] : '';
 
                                             // Membangun kondisi query berdasarkan filter
-                                            if ($_SESSION['username'] !== "timpusat") {
+                                            if ($_SESSION['username'] === "timpusat") {
                                                 if (!empty($id_regency)) {
-                                                    $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_regency = '$id_regency' ";
+                                                    $query .= " WHERE id_regency = '$id_regency' ";
                                                     if (!empty($id_kecamatan)) {
                                                         $query .= " AND id_kecamatan = '$id_kecamatan' ";
                                                         if (!empty($id_desa)) {
@@ -163,12 +163,10 @@ if (!isset($_SESSION['username'])) {
                                                             }
                                                         }
                                                     }
-                                                } else {
-                                                    $query .= " WHERE username='" . $_SESSION['username'] . "'";
                                                 }
                                             } else {
                                                 if (!empty($id_regency)) {
-                                                    $query .= " id_regency = '$id_regency' ";
+                                                    $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_regency = '$id_regency' ";
                                                     if (!empty($id_kecamatan)) {
                                                         $query .= " AND id_kecamatan = '$id_kecamatan' ";
                                                         if (!empty($id_desa)) {

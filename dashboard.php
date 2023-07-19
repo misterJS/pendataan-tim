@@ -31,7 +31,7 @@ if ($_SESSION['username'] !== "timpusat") {
     }
 } else {
     if (!empty($id_regency)) {
-        $query .= " id_regency = '$id_regency' ";
+        $query .= " WHERE id_regency = '$id_regency' ";
         if (!empty($id_kecamatan)) {
             $query .= " AND id_kecamatan = '$id_kecamatan' ";
             if (!empty($id_desa)) {
@@ -41,8 +41,6 @@ if ($_SESSION['username'] !== "timpusat") {
                 }
             }
         }
-    } else {
-        $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan WHERE username='" . $_SESSION['username'] . "'";
     }
 }
 

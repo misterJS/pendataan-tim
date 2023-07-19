@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 include "config/connection.php";
 if (!isset($_SESSION['username'])) {
@@ -31,32 +30,6 @@ if (!isset($_SESSION['username'])) {
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.11.1/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 </head>
-<script type="text/javascript">
-    function confirmDelete(id) {
-        if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-            // Redirect to delete process
-            $.ajax({
-                url: 'delete.php',
-                type: 'POST',
-                data: {
-                    id: id
-                },
-                success: function(response) {
-                    // Handle the response
-                    if (response == 'success') {
-                        alert('Data berhasil dihapus');
-                        location.reload();
-                    } else {
-                        alert('Gagal menghapus data');
-                    }
-                },
-                error: function() {
-                    alert('Terjadi kesalahan dalam menghapus data');
-                }
-            });
-        }
-    }
-</script>
 
 <body class="horizontal-layout">
     <!-- Start Containerbar -->
@@ -103,13 +76,18 @@ if (!isset($_SESSION['username'])) {
                                         <select name="id_regency" id="form_kab" class="form-control">
                                             <option value="">Pilih Kabupaten</option>
                                             <?php
-                                            $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'2')='32' AND CHAR_LENGTH(kode)=5 ORDER BY nama");
+                                            $allowedCodes = array('07', '08', '79', '18');
+                                            $allowedCodesStr = "'" . implode("','", $allowedCodes) . "'";
+
+                                            $daerah = mysqli_query($koneksi, "SELECT kode, nama FROM wilayah_2020 WHERE LEFT(kode, 2) = '32' AND CHAR_LENGTH(kode) = 5 AND RIGHT(kode, 2) IN ($allowedCodesStr) ORDER BY nama");
+
                                             while ($d = mysqli_fetch_array($daerah)) {
                                             ?>
                                                 <option value="<?php echo $d['kode']; ?>"><?php echo $d['nama']; ?></option>
                                             <?php
                                             }
                                             ?>
+
                                         </select>
                                     </div>
                                     <div class="form-group col-md-2">
@@ -149,49 +127,7 @@ if (!isset($_SESSION['username'])) {
                                         </thead>
                                         <tbody>
                                             <?php
-                                            if (isset($_GET['id_regency']) && $_GET['id_regency'] != '') {
-                                                $cari = $_GET['id_regency'];
-                                                $whereClause = "id_regency='" . $cari . "'";
-
-                                                if (isset($_GET['id_kecamatan']) && $_GET['id_kecamatan'] != '') {
-                                                    $cari = $_GET['id_kecamatan'];
-                                                    $whereClause .= " AND id_kecamatan='" . $cari . "'";
-
-                                                    if (isset($_GET['id_desa']) && $_GET['id_desa'] != '') {
-                                                        $cari = $_GET['id_desa'];
-                                                        $whereClause .= " AND id_desa='" . $cari . "'";
-
-                                                        if (isset($_GET['id_tps']) && $_GET['id_tps'] != '') {
-                                                            $cari = $_GET['id_tps'];
-                                                            $whereClause .= " AND id_tps='" . $cari . "'";
-                                                        }
-                                                    }
-                                                }
-                                                if ($_SESSION['username'] !== "timpusat") {
-                                                    // Jika username bukan "timpusat", tambahkan kondisi username ke WHERE clause
-                                                    $whereClause .= " AND username='" . $_SESSION['username'] . "'";
-                                                }
-
-                                                $query = "SELECT  
-                                                id_record, 
-                                                username,
-                                                full_name,
-                                                no_ktp,
-                                                phone_number,
-                                                CASE 
-                                                    WHEN jabatan = 0 THEN 'Koordinator Basis'
-                                                    WHEN jabatan = 1 THEN 'Koordinator Desa'
-                                                    WHEN jabatan = 2 THEN 'Koordinator Kecamatan'
-                                                    WHEN jabatan = 3 THEN 'Koordinator TPS'
-                                                    WHEN jabatan = 4 THEN 'Relawan'
-                                                END jabatan,
-                                                DATE(created_time) c_date,
-                                                url_ktp,
-                                                url_diri
-                                            FROM record_anggota
-                                            WHERE " . $whereClause;
-                                            } else {
-                                                $query = "SELECT 
+                                            $query = "SELECT 
                                                 id_record,
                                                 username,
                                                 full_name,
@@ -208,6 +144,43 @@ if (!isset($_SESSION['username'])) {
                                                 url_ktp,
                                                 url_diri
                                             FROM record_anggota";
+
+                                            $id_regency = isset($_GET['id_regency']) ? $_GET['id_regency'] : '';
+                                            $id_kecamatan = isset($_GET['id_kecamatan']) ? $_GET['id_kecamatan'] : '';
+                                            $id_desa = isset($_GET['id_desa']) ? $_GET['id_desa'] : '';
+                                            $id_tps = isset($_GET['id_tps']) ? $_GET['id_tps'] : '';
+
+                                            // Membangun kondisi query berdasarkan filter
+                                            if ($_SESSION['username'] !== "timpusat") {
+                                                if (!empty($id_regency)) {
+                                                    $query .= " WHERE username='" . $_SESSION['username'] . "' AND id_regency = '$id_regency' ";
+                                                    if (!empty($id_kecamatan)) {
+                                                        $query .= " AND id_kecamatan = '$id_kecamatan' ";
+                                                        if (!empty($id_desa)) {
+                                                            $query .= " AND id_desa = '$id_desa' ";
+                                                            if (!empty($id_tps)) {
+                                                                $query .= " AND id_tps = '$id_tps' ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    $query .= " WHERE username='" . $_SESSION['username'] . "'";
+                                                }
+                                            } else {
+                                                if (!empty($id_regency)) {
+                                                    $query .= " id_regency = '$id_regency' ";
+                                                    if (!empty($id_kecamatan)) {
+                                                        $query .= " AND id_kecamatan = '$id_kecamatan' ";
+                                                        if (!empty($id_desa)) {
+                                                            $query .= " AND id_desa = '$id_desa' ";
+                                                            if (!empty($id_tps)) {
+                                                                $query .= " AND id_tps = '$id_tps' ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    $query .= " WHERE username='" . $_SESSION['username'] . "'";
+                                                }
                                             }
 
                                             $data = mysqli_query($koneksi, $query);
@@ -331,6 +304,31 @@ if (!isset($_SESSION['username'])) {
         $(document).ready(function() {
             $('#data_detail').DataTable();
         });
+
+        function confirmDelete(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                // Redirect to delete process
+                $.ajax({
+                    url: 'delete.php',
+                    type: 'POST',
+                    data: {
+                        id: id
+                    },
+                    success: function(response) {
+                        // Handle the response
+                        if (response == 'success') {
+                            alert('Data berhasil dihapus');
+                            location.reload();
+                        } else {
+                            alert('Gagal menghapus data');
+                        }
+                    },
+                    error: function() {
+                        alert('Terjadi kesalahan dalam menghapus data');
+                    }
+                });
+            }
+        }
     </script>
 </body>
 

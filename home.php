@@ -72,7 +72,11 @@ if (!isset($_SESSION['username'])) {
                                             <select name="id_regency" id="form_kab" class="form-control">
                                                 <option value="">Pilih Kota/Kabupaten</option>
                                                 <?php
-                                                $daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'2')='32' AND CHAR_LENGTH(kode)=5 ORDER BY nama");
+                                                $allowedCodes = array('07', '08', '79', '18');
+                                                $allowedCodesStr = "'" . implode("','", $allowedCodes) . "'";
+
+                                                $daerah = mysqli_query($koneksi, "SELECT kode, nama FROM wilayah_2020 WHERE LEFT(kode, 2) = '32' AND CHAR_LENGTH(kode) = 5 AND RIGHT(kode, 2) IN ($allowedCodesStr) ORDER BY nama");
+
                                                 while ($d = mysqli_fetch_array($daerah)) {
                                                 ?>
                                                     <option value="<?php echo $d['kode']; ?>"><?php echo $d['nama']; ?></option>

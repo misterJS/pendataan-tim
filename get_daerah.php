@@ -14,7 +14,10 @@ if ($data == "kabupaten") {
 	<select name="id_kabupaten" id="form_kec">
 		<option value="">Pilih Kabupaten</option>
 		<?php
-		$daerah = mysqli_query($koneksi, "SELECT kode,nama FROM wilayah_2020 WHERE LEFT(kode,'$n')='$id' AND CHAR_LENGTH(kode)=$m ORDER BY nama");
+		$allowed_codes = ['07', '08', '79', '18'];
+		$allowed_codes_string = "'" . implode("','", $allowed_codes) . "'";
+
+		$daerah = mysqli_query($koneksi, "SELECT kode, nama FROM wilayah_2020 WHERE LEFT(kode, '$n') = '$id' AND CHAR_LENGTH(kode) = $m AND kode IN ($allowed_codes_string) ORDER BY nama");
 
 		while ($d = mysqli_fetch_array($daerah)) {
 		?>
@@ -23,7 +26,6 @@ if ($data == "kabupaten") {
 		}
 		?>
 	</select>
-
 <?php
 } else if ($data == "kecamatan") {
 ?>
@@ -39,7 +41,6 @@ if ($data == "kabupaten") {
 		}
 		?>
 	</select>
-
 <?php
 } else if ($data == "desa") {
 ?>
@@ -55,7 +56,6 @@ if ($data == "kabupaten") {
 		}
 		?>
 	</select>
-
 <?php
 
 } else if ($data == "tps") {
@@ -72,7 +72,6 @@ if ($data == "kabupaten") {
 		}
 		?>
 	</select>
-
 <?php
 
 } ?>

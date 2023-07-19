@@ -1,14 +1,59 @@
 <?php
+session_start();
 include "config/connection.php";
+if (!isset($_SESSION['username'])) {
+    header("Location: index.php");
+    exit; // Ensure to exit after redirection
+}
 
-$query = "SELECT wilayah_2020.nama, COUNT(record_anggota.id_record) AS jumlah, record_anggota.username FROM record_anggota
-          JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan GROUP BY record_anggota.username";
+$query = "SELECT wilayah_2020.nama, COUNT(record_anggota.id_record) AS jumlah, record_anggota.username FROM record_anggota";
+
+$id_regency = isset($_GET['id_regency']) ? $_GET['id_regency'] : '';
+$id_kecamatan = isset($_GET['id_kecamatan']) ? $_GET['id_kecamatan'] : '';
+$id_desa = isset($_GET['id_desa']) ? $_GET['id_desa'] : '';
+$id_tps = isset($_GET['id_tps']) ? $_GET['id_tps'] : '';
+
+// Membangun kondisi query berdasarkan filter
+if ($_SESSION['username'] !== "timpusat") {
+    if (!empty($id_regency)) {
+        $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan WHERE username='" . $_SESSION['username'] . "' AND id_regency = '$id_regency' ";
+        if (!empty($id_kecamatan)) {
+            $query .= " AND id_kecamatan = '$id_kecamatan' ";
+            if (!empty($id_desa)) {
+                $query .= " AND id_desa = '$id_desa' ";
+                if (!empty($id_tps)) {
+                    $query .= " AND id_tps = '$id_tps' ";
+                }
+            }
+        }
+    } else {
+        $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan WHERE username='" . $_SESSION['username'] . "'";
+    }
+} else {
+    if (!empty($id_regency)) {
+        $query .= " id_regency = '$id_regency' ";
+        if (!empty($id_kecamatan)) {
+            $query .= " AND id_kecamatan = '$id_kecamatan' ";
+            if (!empty($id_desa)) {
+                $query .= " AND id_desa = '$id_desa' ";
+                if (!empty($id_tps)) {
+                    $query .= " AND id_tps = '$id_tps' ";
+                }
+            }
+        }
+    } else {
+        $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan WHERE username='" . $_SESSION['username'] . "'";
+    }
+}
+
+$query .= " GROUP BY wilayah_2020.nama";
+
 $result = mysqli_query($koneksi, $query);
 
 $dataPerTim = [];
 $dataCountTim = [];
 while ($row = mysqli_fetch_array($result)) {
-    $dataPerTim[] = $row['username'];
+    $dataPerTim[] = $row['nama']; // Use 'nama' instead of 'username'
     $dataCountTim[] = $row['jumlah'];
 }
 
@@ -18,7 +63,6 @@ $chartData = [
     'values' => $dataCountTim
 ];
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -64,6 +108,44 @@ $chartData = [
                                 <h5 class="card-title">Dashboard</h5>
                             </div>
                             <div class="card-body">
+                                <form action="dashboard.php" method="get" class='form-row'>
+                                    <div class="form-group col-md-2">
+                                        <select name="id_regency" id="form_kab" class="form-control">
+                                            <option value="">Pilih Kabupaten</option>
+                                            <?php
+                                            $allowedCodes = array('07', '08', '79', '18');
+                                            $allowedCodesStr = "'" . implode("','", $allowedCodes) . "'";
+
+                                            $daerah = mysqli_query($koneksi, "SELECT kode, nama FROM wilayah_2020 WHERE LEFT(kode, 2) = '32' AND CHAR_LENGTH(kode) = 5 AND RIGHT(kode, 2) IN ($allowedCodesStr) ORDER BY nama");
+
+                                            while ($d = mysqli_fetch_array($daerah)) {
+                                            ?>
+                                                <option value="<?php echo $d['kode']; ?>"><?php echo $d['nama']; ?></option>
+                                            <?php
+                                            }
+                                            ?>
+
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <select name="id_kecamatan" id="form_kec" class="form-control">
+                                            <option value="">Pilih Kecamatan</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <select name="id_desa" id="form_des" class="form-control">
+                                            <option value="">Pilih Desa</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <select name="id_tps" id="form_tps" class="form-control">
+                                            <option value="">Pilih TPS</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <input type="submit" value="Cari" class="btn btn-success btn-lg btn-block font-14">
+                                    </div>
+                                </form>
                                 <div class="container">
                                     <h2>Jumlah Anggota Berdasarkan Tim</h2>
                                     <div class="col-md-6">
@@ -144,6 +226,54 @@ $chartData = [
     <!-- Core js -->
     <script src="assets/js/core.js"></script>
     <!-- End js -->
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // ambil data kecamatan/kota ketika data memilih kabupaten
+            $('body').on("change", "#form_kab", function() {
+                var id = $(this).val();
+                var data = "id=" + id + "&data=kecamatan";
+                console.log(id);
+                $.ajax({
+                    type: 'POST',
+                    url: "get_daerah.php",
+                    data: data,
+                    success: function(hasil) {
+                        $("#form_kec").html(hasil);
+                    }
+                });
+            });
+
+            // ambil data desa ketika data memilih kecamatan/kota
+            $('body').on("change", "#form_kec", function() {
+                var id = $(this).val();
+                var data = "id=" + id + "&data=desa";
+                console.log(id);
+                $.ajax({
+                    type: 'POST',
+                    url: "get_daerah.php",
+                    data: data,
+                    success: function(hasil) {
+                        $("#form_des").html(hasil);
+                    }
+                });
+            });
+
+            // ambil data tps ketika data memilih desa
+            $('body').on("change", "#form_des", function() {
+                var id = $(this).val();
+                var data = "id=" + id + "&data=tps";
+                console.log(id);
+                $.ajax({
+                    type: 'POST',
+                    url: "get_daerah.php",
+                    data: data,
+                    success: function(hasil) {
+                        $("#form_tps").html(hasil);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

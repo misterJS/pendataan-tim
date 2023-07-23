@@ -6,6 +6,13 @@ if (!isset($_SESSION['username'])) {
     exit; // Ensure to exit after redirection
 }
 
+$queryWithoutFilter = "SELECT COUNT(id_record) AS total_data FROM record_anggota"; // Query to get total data without filter
+
+// Execute query to get total data without filter
+$resultTotalData = mysqli_query($koneksi, $queryWithoutFilter);
+$rowTotalData = mysqli_fetch_assoc($resultTotalData);
+$totalData = $rowTotalData['total_data'];
+
 $query = "SELECT wilayah_2020.nama, COUNT(record_anggota.id_record) AS jumlah, record_anggota.username FROM record_anggota";
 
 $id_regency = isset($_GET['id_regency']) ? $_GET['id_regency'] : '';
@@ -57,11 +64,23 @@ while ($row = mysqli_fetch_array($result)) {
     $dataCountTim[] = $row['jumlah'];
 }
 
-// Contoh data grafik
+// Menghitung persentase masing-masing data
+$percentages = [];
+foreach ($dataCountTim as $count) {
+    $percentage = round(($count / $totalData) * 100, 2);
+    $percentages[] = $percentage;
+}
+
+// Contoh data grafik dengan persentase dan tanda persentase
 $chartData = [
     'labels' => $dataPerTim,
-    'values' => $dataCountTim
+    'values' => $percentages // Gunakan persentase sebagai nilai untuk pie chart
 ];
+
+// Tambahkan tanda persentase ke dalam label untuk ditampilkan di chart
+$chartData['labels'] = array_map(function ($label, $percentage) {
+    return "$label ($percentage%)";
+}, $chartData['labels'], $chartData['values']);
 ?>
 
 <!DOCTYPE html>
@@ -146,134 +165,232 @@ $chartData = [
                                         <input type="submit" value="Cari" class="btn btn-success btn-lg btn-block font-14">
                                     </div>
                                 </form>
-                                <div class="container">
+                                <div>
                                     <h2>Jumlah Anggota Berdasarkan Tim</h2>
-                                    <div class="col-md-6">
-                                        <canvas id="chartPerTim"></canvas>
+                                    <div class="col-md-3">
+                                        <img width="400" src="https://quickchart.io/chart?c=<?php echo urlencode(json_encode([
+                                                                                                'type' => 'doughnut',
+                                                                                                'data' => [
+                                                                                                    'labels' => $chartData['labels'],
+                                                                                                    'datasets' => [[
+                                                                                                        'data' => $chartData['values'],
+                                                                                                        'backgroundColor' => [
+                                                                                                            'rgba(75, 192, 192, 0.2)',
+                                                                                                            'rgba(255, 205, 86, 0.2)',
+                                                                                                            'rgba(54, 162, 235, 0.2)'
+                                                                                                            // Add more background colors for additional data points
+                                                                                                        ],
+                                                                                                        'borderColor' => [
+                                                                                                            'rgba(75, 192, 192, 1)',
+                                                                                                            'rgba(255, 205, 86, 1)',
+                                                                                                            'rgba(54, 162, 235, 1)'
+                                                                                                            // Add more border colors for additional data points
+                                                                                                        ],
+                                                                                                        'borderWidth' => 1
+                                                                                                    ]]
+                                                                                                ],
+                                                                                                'options' => [
+                                                                                                    'plugins' => [
+                                                                                                        'legend' => [
+                                                                                                            'display' => true,
+                                                                                                            'position' => 'right'
+                                                                                                        ],
+                                                                                                        'labels' => [
+                                                                                                            'render' => 'percentage',
+                                                                                                            'precision' => 2,
+                                                                                                            'fontSize' => 10,
+                                                                                                            'fontColor' => '#000',
+                                                                                                            'fontStyle' => 'bold'
+                                                                                                        ],
+                                                                                                        'doughnutlabel' => [
+                                                                                                            'labels' => [
+                                                                                                                [
+                                                                                                                    'text' => $totalData,
+                                                                                                                    'font' => [
+                                                                                                                        'size' => 20,
+                                                                                                                        'weight' => 'bold',
+                                                                                                                    ],
+                                                                                                                ],
+                                                                                                                [
+                                                                                                                    'text' => 'total anggota',
+                                                                                                                ],
+                                                                                                            ],
+                                                                                                        ],
+                                                                                                    ]
+                                                                                                ]
+                                                                                            ])); ?>" />
                                     </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table" id="data_detail">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Kabupaten</th>
+                                                <th>Kecamatan</th>
+                                                <th>Desa</th>
+                                                <th>TPS</th>
+                                                <?php
+                                                if ($_SESSION['username'] === "timpusat") {
+                                                    $query = "SELECT record_anggota.username FROM record_anggota GROUP BY record_anggota.username";
+                                                } else {
+                                                    $query = "SELECT record_anggota.username FROM record_anggota WHERE record_anggota.username='" . $_SESSION['username'] . "' GROUP BY record_anggota.username";
+                                                }
+                                                $hasilQuery = mysqli_query($koneksi, $query);
+                                                while ($peserta = mysqli_fetch_array($hasilQuery)) {
+                                                ?>
+                                                    <th><?php echo $peserta['username'] ?></th>
+                                                <?php
+                                                }
+                                                ?>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $query = "SELECT 
+                                            ra.id_record,
+                                            ra.username,
+                                            w1.nama AS nama_regency,
+                                            w2.nama AS nama_kecamatan,
+                                            w3.nama AS nama_desa,
+                                            ra.id_tps,
+                                            ra.full_name,
+                                            ra.no_ktp,
+                                            ra.phone_number,
+                                            CASE 
+                                                WHEN ra.jabatan = 0 THEN 'Koordinator Basis'
+                                                WHEN ra.jabatan = 1 THEN 'Koordinator Desa'
+                                                WHEN ra.jabatan = 2 THEN 'Koordinator Kecamatan'
+                                                WHEN ra.jabatan = 3 THEN 'Koordinator TPS'
+                                                WHEN ra.jabatan = 4 THEN 'Relawan'
+                                            END jabatan,
+                                            DATE(ra.created_time) c_date,
+                                            ra.url_ktp,
+                                            ra.url_diri
+                                        FROM record_anggota ra
+                                        INNER JOIN wilayah_2020 w1 ON ra.id_regency = w1.kode
+                                        INNER JOIN wilayah_2020 w2 ON ra.id_kecamatan = w2.kode
+                                        INNER JOIN wilayah_2020 w3 ON ra.id_desa = w3.kode
+                                        WHERE LEFT(w1.kode, 2) = '32' AND CHAR_LENGTH(w1.kode) = 5 AND RIGHT(w1.kode, 2) IN ($allowedCodesStr)";
+
+                                            // Membangun kondisi query berdasarkan filter
+                                            if ($_SESSION['username'] !== "timpusat") {
+                                                $query .= " AND username='" . $_SESSION['username'] . "'";
+                                            }
+
+                                            $data = mysqli_query($koneksi, $query);
+                                            $no = 1;
+                                            while ($d = mysqli_fetch_array($data)) {
+                                            ?>
+                                                <tr>
+                                                    <td><?php echo $no++; ?></td>
+                                                    <td><?php echo $d['nama_regency']; ?></td>
+                                                    <td><?php echo $d['nama_kecamatan']; ?></td>
+                                                    <td><?php echo $d['nama_desa']; ?></td>
+                                                    <td><?php echo ("TPS " . substr($d['id_tps'], strrpos($d['id_tps'], '.') + 1)); ?></td>
+                                                    <?php
+                                                    if ($_SESSION['username'] === "timpusat") {
+                                                        $query = "SELECT record_anggota.username FROM record_anggota GROUP BY record_anggota.username";
+                                                    } else {
+                                                        $query = "SELECT record_anggota.username FROM record_anggota WHERE record_anggota.username='" . $_SESSION['username'] . "' GROUP BY record_anggota.username";
+                                                    }
+                                                    $hasilQuery = mysqli_query($koneksi, $query);
+                                                    while ($peserta = mysqli_fetch_array($hasilQuery)) {
+                                                    ?>
+                                                        <td>
+                                                            <input disabled type="checkbox" name="record_id[]" value="<?php echo $d['username']; ?>" <?php echo ($d['username'] === $peserta['username']) ? 'checked' : ''; ?>>
+                                                        </td>
+                                                    <?php
+                                                    }
+                                                    ?>
+                                                </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
+                        <!-- End col -->
                     </div>
-                    <!-- End col -->
+                    <!-- End row -->
                 </div>
-                <!-- End row -->
+                <!-- End Contentbar -->
+                <!-- Start Footerbar -->
+                <div class="footerbar">
+                    <footer class="footer">
+                        <p class="mb-0">© 2023 Sadulur Kang Imam - All Rights Reserved.</p>
+                    </footer>
+                </div>
+                <!-- End Footerbar -->
             </div>
-            <!-- End Contentbar -->
-            <!-- Start Footerbar -->
-            <div class="footerbar">
-                <footer class="footer">
-                    <p class="mb-0">© 2023 Sadulur Kang Imam - All Rights Reserved.</p>
-                </footer>
-            </div>
-            <!-- End Footerbar -->
+            <!-- End Rightbar -->
         </div>
-        <!-- End Rightbar -->
-    </div>
-    <!-- End Containerbar -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Data grafik (contoh data)
-        var data = <?php echo json_encode($chartData); ?>;
 
-        // Membuat grafik jika ada data yang valid
-        if (data && data.labels && data.values) {
-            var ctx = document.getElementById('chartPerTim').getContext('2d');
-            var chartPerTim = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Data',
-                        data: data.values,
-                        backgroundColor: [
-                            'rgba(75, 192, 192, 0.2)',
-                            'rgba(255, 205, 86, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            // Tambahkan warna latar belakang lainnya sesuai dengan jumlah data
-                        ],
-                        borderColor: [
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(255, 205, 86, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            // Tambahkan warna batas lainnya sesuai dengan jumlah data
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+        <!-- Start js -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/popper.min.js"></script>
+        <script src="assets/js/bootstrap.min.js"></script>
+        <script src="assets/js/modernizr.min.js"></script>
+        <script src="assets/js/detect.js"></script>
+        <script src="assets/js/jquery.slimscroll.js"></script>
+        <script src="assets/js/horizontal-menu.js"></script>
+        <!-- Switchery js -->
+        <script src="assets/plugins/switchery/switchery.min.js"></script>
+        <!-- Footable js -->
+        <script src="assets/plugins/moment/moment.js"></script>
+        <!-- Core js -->
+        <script src="assets/js/core.js"></script>
+        <!-- End js -->
+        <script type="text/javascript">
+            $(document).ready(function() {
+                // ambil data kecamatan/kota ketika data memilih kabupaten
+                $('body').on("change", "#form_kab", function() {
+                    $('#data_detail').DataTable();
+
+                    var id = $(this).val();
+                    var data = "id=" + id + "&data=kecamatan";
+                    console.log(id);
+                    $.ajax({
+                        type: 'POST',
+                        url: "get_daerah.php",
+                        data: data,
+                        success: function(hasil) {
+                            $("#form_kec").html(hasil);
                         }
-                    }
-                }
-            });
-        }
-    </script>
-    <!-- Start js -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/popper.min.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/modernizr.min.js"></script>
-    <script src="assets/js/detect.js"></script>
-    <script src="assets/js/jquery.slimscroll.js"></script>
-    <script src="assets/js/horizontal-menu.js"></script>
-    <!-- Switchery js -->
-    <script src="assets/plugins/switchery/switchery.min.js"></script>
-    <!-- Footable js -->
-    <script src="assets/plugins/moment/moment.js"></script>
-    <!-- Core js -->
-    <script src="assets/js/core.js"></script>
-    <!-- End js -->
-    <script type="text/javascript">
-        $(document).ready(function() {
-            // ambil data kecamatan/kota ketika data memilih kabupaten
-            $('body').on("change", "#form_kab", function() {
-                var id = $(this).val();
-                var data = "id=" + id + "&data=kecamatan";
-                console.log(id);
-                $.ajax({
-                    type: 'POST',
-                    url: "get_daerah.php",
-                    data: data,
-                    success: function(hasil) {
-                        $("#form_kec").html(hasil);
-                    }
+                    });
                 });
-            });
 
-            // ambil data desa ketika data memilih kecamatan/kota
-            $('body').on("change", "#form_kec", function() {
-                var id = $(this).val();
-                var data = "id=" + id + "&data=desa";
-                console.log(id);
-                $.ajax({
-                    type: 'POST',
-                    url: "get_daerah.php",
-                    data: data,
-                    success: function(hasil) {
-                        $("#form_des").html(hasil);
-                    }
+                // ambil data desa ketika data memilih kecamatan/kota
+                $('body').on("change", "#form_kec", function() {
+                    var id = $(this).val();
+                    var data = "id=" + id + "&data=desa";
+                    console.log(id);
+                    $.ajax({
+                        type: 'POST',
+                        url: "get_daerah.php",
+                        data: data,
+                        success: function(hasil) {
+                            $("#form_des").html(hasil);
+                        }
+                    });
                 });
-            });
 
-            // ambil data tps ketika data memilih desa
-            $('body').on("change", "#form_des", function() {
-                var id = $(this).val();
-                var data = "id=" + id + "&data=tps";
-                console.log(id);
-                $.ajax({
-                    type: 'POST',
-                    url: "get_daerah.php",
-                    data: data,
-                    success: function(hasil) {
-                        $("#form_tps").html(hasil);
-                    }
+                // ambil data tps ketika data memilih desa
+                $('body').on("change", "#form_des", function() {
+                    var id = $(this).val();
+                    var data = "id=" + id + "&data=tps";
+                    console.log(id);
+                    $.ajax({
+                        type: 'POST',
+                        url: "get_daerah.php",
+                        data: data,
+                        success: function(hasil) {
+                            $("#form_tps").html(hasil);
+                        }
+                    });
                 });
             });
-        });
-    </script>
+        </script>
 </body>
 
 </html>

@@ -82,10 +82,12 @@ if (!isset($_SESSION['username'])) {
                                             $daerah = mysqli_query($koneksi, "SELECT kode, nama FROM wilayah_2020 WHERE LEFT(kode, 2) = '32' AND CHAR_LENGTH(kode) = 5 AND RIGHT(kode, 2) IN ($allowedCodesStr) ORDER BY nama");
 
                                             while ($d = mysqli_fetch_array($daerah)) {
+                                                $selected = ($d['kode'] == $id_regency) ? 'selected' : ''; // Add this line to mark the correct option as selected
                                             ?>
-                                                <option value="<?php echo $d['kode']; ?>"><?php echo $d['nama']; ?></option>
+                                                <option value="<?php echo $d['kode']; ?>" <?php echo $selected; ?>><?php echo $d['nama']; ?></option>
                                             <?php
                                             }
+
                                             ?>
 
                                         </select>
@@ -294,6 +296,30 @@ if (!isset($_SESSION['username'])) {
                     }
                 });
             });
+
+            // Get URL parameters and set selected value for the select elements
+            var urlParams = new URLSearchParams(window.location.search);
+            var id_regency = urlParams.get('id_regency');
+            var id_kecamatan = urlParams.get('id_kecamatan');
+            var id_desa = urlParams.get('id_desa');
+            var id_tps = urlParams.get('id_tps');
+
+            // Set selected value on select elements based on URL parameters
+            if (id_regency) {
+                $("#form_kab").val(id_regency);
+            }
+
+            if (id_kecamatan) {
+                $("#form_kec").val(id_kecamatan);
+            }
+
+            if (id_desa) {
+                $("#form_des").val(id_desa);
+            }
+
+            if (id_tps) {
+                $("#form_tps").val(id_tps);
+            }
 
             $('#data_detail').DataTable();
         });

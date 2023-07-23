@@ -345,8 +345,6 @@ $chartData['labels'] = array_map(function ($label, $percentage) {
             $(document).ready(function() {
                 // ambil data kecamatan/kota ketika data memilih kabupaten
                 $('body').on("change", "#form_kab", function() {
-                    $('#data_detail').DataTable();
-
                     var id = $(this).val();
                     var data = "id=" + id + "&data=kecamatan";
                     console.log(id);

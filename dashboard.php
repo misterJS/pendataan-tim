@@ -6,21 +6,58 @@ if (!isset($_SESSION['username'])) {
     exit; // Ensure to exit after redirection
 }
 
+// Function to fetch total data without filters
+function getTotalData($koneksi, $query)
+{
+    $result = mysqli_query($koneksi, $query);
+    $row = mysqli_fetch_assoc($result);
+    return $row['total_data'];
+}
+
+// Function to fetch data per team and calculate percentages
+function getChartData($koneksi, $query, $totalData)
+{
+    $result = mysqli_query($koneksi, $query);
+
+    $dataPerTim = [];
+    $dataCountTim = [];
+    $percentages = [];
+
+    while ($row = mysqli_fetch_array($result)) {
+        $dataPerTim[] = $row['username']; // Use 'nama' instead of 'username'
+        $dataCountTim[] = $row['jumlah'];
+    }
+
+    // Calculate percentages
+    foreach ($dataCountTim as $count) {
+        $percentage = round(($count / $totalData) * 100, 2);
+        $percentages[] = $percentage;
+    }
+
+    // Prepare chart data
+    $chartData = [
+        'labels' => array_map(function ($label, $percentage) {
+            return "$label ($percentage%)";
+        }, $dataPerTim, $percentages),
+        'values' => $percentages,
+    ];
+
+    return $chartData;
+}
+
 $queryWithoutFilter = "SELECT COUNT(id_record) AS total_data FROM record_anggota"; // Query to get total data without filter
 
-// Execute query to get total data without filter
-$resultTotalData = mysqli_query($koneksi, $queryWithoutFilter);
-$rowTotalData = mysqli_fetch_assoc($resultTotalData);
-$totalData = $rowTotalData['total_data'];
-
-$query = "SELECT wilayah_2020.nama, COUNT(record_anggota.id_record) AS jumlah, record_anggota.username FROM record_anggota";
+// Fetch total data without filters
+$totalData = getTotalData($koneksi, $queryWithoutFilter);
 
 $id_regency = isset($_GET['id_regency']) ? $_GET['id_regency'] : '';
 $id_kecamatan = isset($_GET['id_kecamatan']) ? $_GET['id_kecamatan'] : '';
 $id_desa = isset($_GET['id_desa']) ? $_GET['id_desa'] : '';
 $id_tps = isset($_GET['id_tps']) ? $_GET['id_tps'] : '';
 
-// Membangun kondisi query berdasarkan filter
+// Build query based on filters
+$query = "SELECT wilayah_2020.nama, COUNT(record_anggota.id_record) AS jumlah, record_anggota.username FROM record_anggota";
+
 if ($_SESSION['username'] !== "timpusat") {
     if (!empty($id_regency)) {
         $query .= " JOIN wilayah_2020 ON wilayah_2020.kode = record_anggota.id_kecamatan WHERE username='" . $_SESSION['username'] . "' AND id_regency = '$id_regency' ";
@@ -55,33 +92,22 @@ if ($_SESSION['username'] !== "timpusat") {
 
 $query .= " GROUP BY wilayah_2020.nama";
 
-$result = mysqli_query($koneksi, $query);
+// Fetch chart data
+$chartData = getChartData($koneksi, $query, $totalData);
 
-$dataPerTim = [];
-$dataCountTim = [];
-while ($row = mysqli_fetch_array($result)) {
-    $dataPerTim[] = $row['nama']; // Use 'nama' instead of 'username'
-    $dataCountTim[] = $row['jumlah'];
-}
+// Fetch total data per region without filters
+$totalDataCiamis = getTotalData($koneksi, "SELECT COUNT(id_record) AS total_data FROM record_anggota WHERE record_anggota.id_regency=32.07");
+$totalDataKuningan = getTotalData($koneksi, "SELECT COUNT(id_record) AS total_data FROM record_anggota WHERE record_anggota.id_regency=32.08");
+$totalDataPangandaran = getTotalData($koneksi, "SELECT COUNT(id_record) AS total_data FROM record_anggota WHERE record_anggota.id_regency=32.18");
+$totalDataBanjar = getTotalData($koneksi, "SELECT COUNT(id_record) AS total_data FROM record_anggota WHERE record_anggota.id_regency=32.79");
 
-// Menghitung persentase masing-masing data
-$percentages = [];
-foreach ($dataCountTim as $count) {
-    $percentage = round(($count / $totalData) * 100, 2);
-    $percentages[] = $percentage;
-}
-
-// Contoh data grafik dengan persentase dan tanda persentase
-$chartData = [
-    'labels' => $dataPerTim,
-    'values' => $percentages // Gunakan persentase sebagai nilai untuk pie chart
-];
-
-// Tambahkan tanda persentase ke dalam label untuk ditampilkan di chart
-$chartData['labels'] = array_map(function ($label, $percentage) {
-    return "$label ($percentage%)";
-}, $chartData['labels'], $chartData['values']);
+// Fetch chart data for each region
+$chartDataCiamis = getChartData($koneksi, "SELECT record_anggota.username, COUNT(record_anggota.username) AS jumlah FROM record_anggota WHERE record_anggota.id_regency=32.07 GROUP BY record_anggota.username", $totalDataCiamis);
+$chartDataKuningan = getChartData($koneksi, "SELECT record_anggota.username, COUNT(record_anggota.username) AS jumlah FROM record_anggota WHERE record_anggota.id_regency=32.08 GROUP BY record_anggota.username", $totalDataKuningan);
+$chartDataPangandaran = getChartData($koneksi, "SELECT record_anggota.username, COUNT(record_anggota.username) AS jumlah FROM record_anggota WHERE record_anggota.id_regency=32.18 GROUP BY record_anggota.username", $totalDataPangandaran);
+$chartDataBanjar = getChartData($koneksi, "SELECT record_anggota.username, COUNT(record_anggota.username) AS jumlah FROM record_anggota WHERE record_anggota.id_regency=32.79 GROUP BY record_anggota.username", $totalDataBanjar);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -219,6 +245,228 @@ $chartData['labels'] = array_map(function ($label, $percentage) {
                                                                                                     ]
                                                                                                 ]
                                                                                             ])); ?>" />
+                                    </div>
+                                    <h2>Jumlah Anggota Berdasarkan Kabupaten</h2>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <p>Kabupaten Ciamis</p>
+                                            <img width="300" src="https://quickchart.io/chart?c=<?php echo urlencode(json_encode([
+                                                                                                    'type' => 'doughnut',
+                                                                                                    'data' => [
+                                                                                                        'labels' => $chartDataCiamis['labels'],
+                                                                                                        'datasets' => [[
+                                                                                                            'data' => $chartDataCiamis['values'],
+                                                                                                            'backgroundColor' => [
+                                                                                                                'rgba(75, 192, 192, 0.2)',
+                                                                                                                'rgba(255, 205, 86, 0.2)',
+                                                                                                                'rgba(54, 162, 235, 0.2)'
+                                                                                                                // Add more background colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderColor' => [
+                                                                                                                'rgba(75, 192, 192, 1)',
+                                                                                                                'rgba(255, 205, 86, 1)',
+                                                                                                                'rgba(54, 162, 235, 1)'
+                                                                                                                // Add more border colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderWidth' => 1
+                                                                                                        ]]
+                                                                                                    ],
+                                                                                                    'options' => [
+                                                                                                        'plugins' => [
+                                                                                                            'legend' => [
+                                                                                                                'display' => true,
+                                                                                                                'position' => 'right'
+                                                                                                            ],
+                                                                                                            'labels' => [
+                                                                                                                'render' => 'percentage',
+                                                                                                                'precision' => 2,
+                                                                                                                'fontSize' => 10,
+                                                                                                                'fontColor' => '#000',
+                                                                                                                'fontStyle' => 'bold'
+                                                                                                            ],
+                                                                                                            'doughnutlabel' => [
+                                                                                                                'labels' => [
+                                                                                                                    [
+                                                                                                                        'text' => $totalDataCiamis,
+                                                                                                                        'font' => [
+                                                                                                                            'size' => 20,
+                                                                                                                            'weight' => 'bold',
+                                                                                                                        ],
+                                                                                                                    ],
+                                                                                                                    [
+                                                                                                                        'text' => 'total anggota',
+                                                                                                                    ],
+                                                                                                                ],
+                                                                                                            ],
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ])); ?>" />
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <p>Kabupaten Kuningan</p>
+                                            <img width="300" src="https://quickchart.io/chart?c=<?php echo urlencode(json_encode([
+                                                                                                    'type' => 'doughnut',
+                                                                                                    'data' => [
+                                                                                                        'labels' => $chartDataKuningan['labels'],
+                                                                                                        'datasets' => [[
+                                                                                                            'data' => $chartDataKuningan['values'],
+                                                                                                            'backgroundColor' => [
+                                                                                                                'rgba(75, 192, 192, 0.2)',
+                                                                                                                'rgba(255, 205, 86, 0.2)',
+                                                                                                                'rgba(54, 162, 235, 0.2)'
+                                                                                                                // Add more background colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderColor' => [
+                                                                                                                'rgba(75, 192, 192, 1)',
+                                                                                                                'rgba(255, 205, 86, 1)',
+                                                                                                                'rgba(54, 162, 235, 1)'
+                                                                                                                // Add more border colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderWidth' => 1
+                                                                                                        ]]
+                                                                                                    ],
+                                                                                                    'options' => [
+                                                                                                        'plugins' => [
+                                                                                                            'legend' => [
+                                                                                                                'display' => true,
+                                                                                                                'position' => 'right'
+                                                                                                            ],
+                                                                                                            'labels' => [
+                                                                                                                'render' => 'percentage',
+                                                                                                                'precision' => 2,
+                                                                                                                'fontSize' => 10,
+                                                                                                                'fontColor' => '#000',
+                                                                                                                'fontStyle' => 'bold'
+                                                                                                            ],
+                                                                                                            'doughnutlabel' => [
+                                                                                                                'labels' => [
+                                                                                                                    [
+                                                                                                                        'text' => $totalDataKuningan,
+                                                                                                                        'font' => [
+                                                                                                                            'size' => 20,
+                                                                                                                            'weight' => 'bold',
+                                                                                                                        ],
+                                                                                                                    ],
+                                                                                                                    [
+                                                                                                                        'text' => 'total anggota',
+                                                                                                                    ],
+                                                                                                                ],
+                                                                                                            ],
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ])); ?>" />
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <p>Kabupaten Pangandaran</p>
+                                            <img width="300" src="https://quickchart.io/chart?c=<?php echo urlencode(json_encode([
+                                                                                                    'type' => 'doughnut',
+                                                                                                    'data' => [
+                                                                                                        'labels' => $chartDataPangandaran['labels'],
+                                                                                                        'datasets' => [[
+                                                                                                            'data' => $chartDataPangandaran['values'],
+                                                                                                            'backgroundColor' => [
+                                                                                                                'rgba(75, 192, 192, 0.2)',
+                                                                                                                'rgba(255, 205, 86, 0.2)',
+                                                                                                                'rgba(54, 162, 235, 0.2)'
+                                                                                                                // Add more background colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderColor' => [
+                                                                                                                'rgba(75, 192, 192, 1)',
+                                                                                                                'rgba(255, 205, 86, 1)',
+                                                                                                                'rgba(54, 162, 235, 1)'
+                                                                                                                // Add more border colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderWidth' => 1
+                                                                                                        ]]
+                                                                                                    ],
+                                                                                                    'options' => [
+                                                                                                        'plugins' => [
+                                                                                                            'legend' => [
+                                                                                                                'display' => true,
+                                                                                                                'position' => 'right'
+                                                                                                            ],
+                                                                                                            'labels' => [
+                                                                                                                'render' => 'percentage',
+                                                                                                                'precision' => 2,
+                                                                                                                'fontSize' => 10,
+                                                                                                                'fontColor' => '#000',
+                                                                                                                'fontStyle' => 'bold'
+                                                                                                            ],
+                                                                                                            'doughnutlabel' => [
+                                                                                                                'labels' => [
+                                                                                                                    [
+                                                                                                                        'text' => $totalDataPangandaran,
+                                                                                                                        'font' => [
+                                                                                                                            'size' => 20,
+                                                                                                                            'weight' => 'bold',
+                                                                                                                        ],
+                                                                                                                    ],
+                                                                                                                    [
+                                                                                                                        'text' => 'total anggota',
+                                                                                                                    ],
+                                                                                                                ],
+                                                                                                            ],
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ])); ?>" />
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <p>Kabupaten Banjar</p>
+                                            <img width="300" src="https://quickchart.io/chart?c=<?php echo urlencode(json_encode([
+                                                                                                    'type' => 'doughnut',
+                                                                                                    'data' => [
+                                                                                                        'labels' => $chartDataBanjar['labels'],
+                                                                                                        'datasets' => [[
+                                                                                                            'data' => $chartDataBanjar['values'],
+                                                                                                            'backgroundColor' => [
+                                                                                                                'rgba(75, 192, 192, 0.2)',
+                                                                                                                'rgba(255, 205, 86, 0.2)',
+                                                                                                                'rgba(54, 162, 235, 0.2)'
+                                                                                                                // Add more background colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderColor' => [
+                                                                                                                'rgba(75, 192, 192, 1)',
+                                                                                                                'rgba(255, 205, 86, 1)',
+                                                                                                                'rgba(54, 162, 235, 1)'
+                                                                                                                // Add more border colors for additional data points
+                                                                                                            ],
+                                                                                                            'borderWidth' => 1
+                                                                                                        ]]
+                                                                                                    ],
+                                                                                                    'options' => [
+                                                                                                        'plugins' => [
+                                                                                                            'legend' => [
+                                                                                                                'display' => true,
+                                                                                                                'position' => 'right'
+                                                                                                            ],
+                                                                                                            'labels' => [
+                                                                                                                'render' => 'percentage',
+                                                                                                                'precision' => 2,
+                                                                                                                'fontSize' => 10,
+                                                                                                                'fontColor' => '#000',
+                                                                                                                'fontStyle' => 'bold'
+                                                                                                            ],
+                                                                                                            'doughnutlabel' => [
+                                                                                                                'labels' => [
+                                                                                                                    [
+                                                                                                                        'text' => $totalDataBanjar,
+                                                                                                                        'font' => [
+                                                                                                                            'size' => 20,
+                                                                                                                            'weight' => 'bold',
+                                                                                                                        ],
+                                                                                                                    ],
+                                                                                                                    [
+                                                                                                                        'text' => 'total anggota',
+                                                                                                                    ],
+                                                                                                                ],
+                                                                                                            ],
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ])); ?>" />
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="table-responsive">

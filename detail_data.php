@@ -119,9 +119,11 @@ if (!isset($_SESSION['username'])) {
                                                 <th>Tim</th>
                                                 <th>Jabatan</th>
                                                 <th>Nama Lengkap</th>
-                                                <th>NIK</th>
                                                 <th>Nomor Ponsel</th>
-                                                <th>Tanggal Pendaftaran</th>
+                                                <th>Kabupaten</th>
+                                                <th>Kecamatan</th>
+                                                <th>Desa</th>
+                                                <th>Tps</th>
                                                 <th>Foto KTP</th>
                                                 <th>Foto Diri</th>
                                                 <th>Action</th>
@@ -135,6 +137,10 @@ if (!isset($_SESSION['username'])) {
                                                 full_name,
                                                 no_ktp,
                                                 phone_number,
+                                                id_regency,
+                                                id_kecamatan,
+                                                id_desa,
+                                                id_tps,
                                                 CASE 
                                                     WHEN jabatan = 0 THEN 'Koordinator Basis'
                                                     WHEN jabatan = 1 THEN 'Koordinator Desa'
@@ -186,15 +192,35 @@ if (!isset($_SESSION['username'])) {
                                             $data = mysqli_query($koneksi, $query);
                                             $no = 1;
                                             while ($d = mysqli_fetch_array($data)) {
+
+                                                $regency_query = "SELECT nama FROM wilayah_2020 WHERE kode = '{$d['id_regency']}'";
+                                                $regency_result = mysqli_query($koneksi, $regency_query);
+                                                $regency_row = mysqli_fetch_assoc($regency_result);
+                                                $regency_name = $regency_row['nama'];
+
+                                                $kecamatan_query = "SELECT nama FROM wilayah_2020 WHERE kode = '{$d['id_kecamatan']}'";
+                                                $kecamatan_result = mysqli_query($koneksi, $kecamatan_query);
+                                                $kecamatan_row = mysqli_fetch_assoc($kecamatan_result);
+                                                $kecamatan_name = $kecamatan_row['nama'];
+
+                                                $desa_query = "SELECT nama FROM wilayah_2020 WHERE kode = '{$d['id_desa']}'";
+                                                $desa_result = mysqli_query($koneksi, $desa_query);
+                                                $desa_row = mysqli_fetch_assoc($desa_result);
+                                                $desa_name = $desa_row['nama'];
+
+                                                $id_tps_substring = substr($d['id_tps'], 15, 17);
+
                                             ?>
                                                 <tr>
                                                     <td><?php echo $no++; ?></td>
                                                     <td><?php echo $d['username']; ?></td>
                                                     <td><?php echo $d['jabatan']; ?></td>
                                                     <td><?php echo $d['full_name']; ?></td>
-                                                    <td><?php echo $d['no_ktp']; ?></td>
                                                     <td><?php echo $d['phone_number']; ?></td>
-                                                    <td><?php echo $d['c_date']; ?></td>
+                                                    <td><?php echo $regency_name; ?></td>
+                                                    <td><?php echo $kecamatan_name; ?></td>
+                                                    <td><?php echo $desa_name; ?></td>
+                                                    <td>TPS-<?php echo $id_tps_substring; ?></td>
                                                     <td><img src="images/<?php echo $d['url_ktp'] ?>" width="35" height="40"></td>
                                                     <td><img src="images/<?php echo $d['url_diri'] ?>" width="35" height="40"></td>
                                                     <td>

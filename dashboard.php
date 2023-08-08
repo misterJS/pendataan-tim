@@ -90,7 +90,7 @@ if ($_SESSION['username'] !== "timpusat") {
     }
 }
 
-$query .= " GROUP BY wilayah_2020.nama";
+$query .= " GROUP BY record_anggota.username";
 
 // Fetch chart data
 $chartData = getChartData($koneksi, $query, $totalData);

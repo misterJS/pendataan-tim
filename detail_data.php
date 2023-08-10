@@ -4,6 +4,11 @@ include "config/connection.php";
 if (!isset($_SESSION['username'])) {
     header("Location: index.php");
 }
+
+$id_regency = isset($_GET['id_regency']) ? $_GET['id_regency'] : '';
+$id_kecamatan = isset($_GET['id_kecamatan']) ? $_GET['id_kecamatan'] : '';
+$id_desa = isset($_GET['id_desa']) ? $_GET['id_desa'] : '';
+$id_tps = isset($_GET['id_tps']) ? $_GET['id_tps'] : '';
 ?>
 
 <!DOCTYPE html>
@@ -107,8 +112,11 @@ if (!isset($_SESSION['username'])) {
                                             <option value="">Pilih TPS</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-2">
+                                    <div class="form-group col-md-1">
                                         <input type="submit" value="Cari" class="btn btn-success btn-lg btn-block font-14">
+                                    </div>
+                                    <div class="form-group col-md-1">
+                                        <a href="export_excel.php?id_regency=<?php echo $id_regency; ?>&id_kecamatan=<?php echo $id_kecamatan; ?>&id_desa=<?php echo $id_desa; ?>&id_tps=<?php echo $id_tps; ?>" class="btn btn-info btn-lg btn-block font-14">Export to Excel</a>
                                     </div>
                                 </form>
                                 <div class="table-responsive">

@@ -36,7 +36,7 @@ $sheet->setCellValue('A1', '#');
 $sheet->setCellValue('B1', 'Tim');
 $sheet->setCellValue('C1', 'Jabatan');
 $sheet->setCellValue('D1', 'Nama Lengkap');
-$sheet->setCellValue('E1', 'Nama Lengkap');
+$sheet->setCellValue('E1', 'Nomer KTP');
 $sheet->setCellValue('F1', 'Nomor Ponsel');
 $sheet->setCellValue('G1', 'Kabupaten');
 $sheet->setCellValue('H1', 'Kecamatan');

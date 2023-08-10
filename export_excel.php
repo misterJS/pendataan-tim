@@ -36,11 +36,12 @@ $sheet->setCellValue('A1', '#');
 $sheet->setCellValue('B1', 'Tim');
 $sheet->setCellValue('C1', 'Jabatan');
 $sheet->setCellValue('D1', 'Nama Lengkap');
-$sheet->setCellValue('E1', 'Nomor Ponsel');
-$sheet->setCellValue('F1', 'Kabupaten');
-$sheet->setCellValue('G1', 'Kecamatan');
-$sheet->setCellValue('H1', 'Desa');
-$sheet->setCellValue('I1', 'TPS');
+$sheet->setCellValue('E1', 'Nama Lengkap');
+$sheet->setCellValue('F1', 'Nomor Ponsel');
+$sheet->setCellValue('G1', 'Kabupaten');
+$sheet->setCellValue('H1', 'Kecamatan');
+$sheet->setCellValue('I1', 'Desa');
+$sheet->setCellValue('J1', 'TPS');
 // ... tambahkan header kolom lain sesuai kebutuhan
 
 $result = mysqli_query($koneksi, $query);
@@ -69,11 +70,12 @@ while ($data = mysqli_fetch_array($result)) {
     $sheet->setCellValue('B' . $row, $data['username']);
     $sheet->setCellValue('C' . $row, $data['jabatan']);
     $sheet->setCellValue('D' . $row, $data['full_name']);
-    $sheet->setCellValue('E' . $row, $data['phone_number']);
-    $sheet->setCellValue('F' . $row, $regency_name);
-    $sheet->setCellValue('G' . $row, $kecamatan_name);
-    $sheet->setCellValue('H' . $row, $desa_name);
-    $sheet->setCellValue('I' . $row, $id_tps_substring);
+    $sheet->setCellValue('E' . $row, $data['no_ktp']);
+    $sheet->setCellValue('F' . $row, $data['phone_number']);
+    $sheet->setCellValue('G' . $row, $regency_name);
+    $sheet->setCellValue('H' . $row, $kecamatan_name);
+    $sheet->setCellValue('I' . $row, $desa_name);
+    $sheet->setCellValue('J' . $row, $id_tps_substring);
     // ... tambahkan data kolom lain sesuai kebutuhan
     $row++;
 }
